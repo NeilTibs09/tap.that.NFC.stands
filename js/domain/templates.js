@@ -2,7 +2,7 @@
 // Nothing here sends anything: links open the relevant app with a draft
 // that the seller reviews and sends by hand, one business at a time.
 
-import { firstName } from './leads.js';
+import { firstName, isPlaceholderName } from './leads.js';
 import { formatRand } from './util.js';
 
 export function fillTemplate(template, vars) {
@@ -64,7 +64,9 @@ export function mailtoLink(email, subject = '', body = '') {
 
 /** Google Maps link for a lead. With a Place ID it opens that exact listing. */
 export function mapsSearchLink(lead) {
-  const q = [lead.name, lead.address || lead.suburb, lead.area].filter(Boolean).join(', ');
+  // A placeholder name would only confuse Maps' fallback search; the Place ID does the work.
+  const name = isPlaceholderName(lead.name) ? '' : lead.name;
+  const q = [name, lead.address || lead.suburb, lead.area].filter(Boolean).join(', ');
   const base = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
   return lead.placeId ? `${base}&query_place_id=${encodeURIComponent(lead.placeId)}` : base;
 }

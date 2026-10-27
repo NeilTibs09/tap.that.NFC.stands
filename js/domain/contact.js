@@ -96,7 +96,8 @@ export function callQueue(state, now = new Date()) {
   const weights = state.settings.scoringWeights;
   const rows = [];
   for (const lead of state.leads) {
-    if (!usablePhones(lead).length) continue;
+    // Place-ID-only prospects (no stored number) are called from their Google Maps listing.
+    if (!usablePhones(lead).length && !lead.placeId) continue;
     const cs = contactState(lead, state, now);
     if (!cs.allowed) continue;
     if (callbackLater(lead, now)) continue;

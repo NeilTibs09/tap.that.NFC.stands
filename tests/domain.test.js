@@ -419,6 +419,8 @@ test('Place IDs give exact Maps links and routes', () => {
   const a = newLead({ name: 'Barber prospect 1', area: 'Gqeberha', placeId: 'ChIJaaa' });
   const b = newLead({ name: 'Barber prospect 2', area: 'Gqeberha', placeId: 'ChIJbbb' });
   assert.match(mapsSearchLink(a), /query_place_id=ChIJaaa$/);
+  const ph = newLead({ name: 'Barber prospect GQ-001', area: 'Gqeberha', placeId: 'ChIJccc' });
+  assert.doesNotMatch(mapsSearchLink(ph), /prospect/);
   const r = routeLink([a, b]);
   assert.match(r, /destination_place_id=ChIJbbb/);
   assert.match(r, /waypoint_place_ids=ChIJaaa/);
@@ -517,4 +519,16 @@ test('store keeps unreadable data instead of overwriting it', () => {
   assert.ok(store.loadError);
   assert.throws(() => store.transact(() => {}), /could not be read/);
   assert.equal(storage.getItem(STORAGE_KEY), '{not json');
+});
+
+test('Place-ID-only prospects appear in the call list; placeholder names are recognised', async () => {
+  const { isPlaceholderName } = await import('../js/domain/leads.js');
+  const s = freshState(T0);
+  s.leads.push(newLead({ name: 'Barber prospect GQ-014', category: 'barber', placeId: 'ChIJaaa' }, T0));
+  s.leads.push(newLead({ name: 'No contact info', category: 'barber' }, T0));
+  const q = callQueue(s, T0);
+  assert.deepEqual(q.map((r) => r.lead.name), ['Barber prospect GQ-014']);
+  assert.equal(whatsappQueue(s, T0).length, 0, 'no WhatsApp without a confirmed mobile number');
+  assert.equal(isPlaceholderName('Barber prospect GQ-014'), true);
+  assert.equal(isPlaceholderName('Fade Lab'), false);
 });

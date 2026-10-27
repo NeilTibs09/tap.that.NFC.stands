@@ -62,6 +62,20 @@ Not tested / limitations:
 - Mobile/landline detection is by number prefix; ported numbers may be wrong.
 - No multi-device sync (see "where your data lives").
 
+## Prospect lists from Google Places (compliant workflow)
+
+Google's Maps Platform terms (section 3.2.3) forbid copying and saving business names, addresses or reviews from the Places API. Only **Place IDs** may be stored indefinitely (Service Specific Terms, "Google ID Caching"). Latitude/longitude may be kept for at most 30 days.
+
+So prospect lists for this app contain **only Place IDs**, plus labels from our own searches (the category we searched for and an approximate area), and **placeholder names** like `Barber prospect GQ-014`:
+
+- The call list shows these leads with **Open Google listing to call**. You see the real name, number and reviews in Google Maps and call from there.
+- Record only what you confirm yourself (business name, owner, numbers they give you) with **Add confirmed name & number**.
+- WhatsApp and email drafts are blocked until a placeholder name has been replaced.
+- The Maps link, the visit route and the review link (`search.google.com/local/writereview?placeid=…`) are all built from the Place ID.
+- Treat the search labels as temporary: replace them with confirmed details, or delete unconfirmed prospects, within 30 days of the search.
+
+Never commit prospect CSVs to this repository (it's public, and the files are git-ignored).
+
 ## Code layout
 
 ```

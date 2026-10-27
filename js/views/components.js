@@ -2,9 +2,9 @@
 
 import { CHANNELS, OUTCOMES, outcome as findOutcome } from '../domain/constants.js';
 import { contactState, politeHoursWarning } from '../domain/contact.js';
-import { logActivity, removeActivity, usablePhones, whatsappNumber } from '../domain/leads.js';
+import { isPlaceholderName, logActivity, removeActivity, usablePhones, whatsappNumber } from '../domain/leads.js';
 import { PHONE_TYPES, formatNational } from '../domain/phone.js';
-import { emailDraft, mailtoLink, telLink, waLink, whatsappDraft } from '../domain/templates.js';
+import { emailDraft, mailtoLink, mapsSearchLink, telLink, waLink, whatsappDraft } from '../domain/templates.js';
 import { fromLocalInput, toLocalInput } from '../domain/util.js';
 import { formData, html, raw, showError, toast } from '../ui.js';
 
@@ -16,7 +16,13 @@ export function contactBanner(lead, state, now) {
 }
 
 export function callButtons(lead, { small = false } = {}) {
-  return usablePhones(lead).map(
+  const phones = usablePhones(lead);
+  if (!phones.length && lead.placeId) {
+    return html`<a class="btn ${small ? 'small' : ''} primary" href="${mapsSearchLink(lead)}" target="_blank" rel="noopener" data-action="callStart" data-lead="${lead.id}" data-phone="">
+      Open Google listing to call</a>
+      ${isPlaceholderName(lead.name) ? html`<a class="btn ${small ? 'small' : ''}" href="#/lead/${lead.id}/edit">Add confirmed name &amp; number</a>` : ''}`;
+  }
+  return phones.map(
     (p) => html`<a class="btn ${small ? 'small' : ''} primary" href="${telLink(p.e164)}" data-action="callStart" data-lead="${lead.id}" data-phone="${p.e164}">
       Call ${formatNational(p.e164)} <small style="color:inherit;opacity:.8">${PHONE_TYPES[p.type]}</small></a>`
   );
@@ -135,6 +141,7 @@ export function whatsappComposer(lead, state, now, { prefix = '' } = {}) {
   const number = whatsappNumber(lead);
   if (!number) return html`<p class="muted">No mobile / WhatsApp number on file.</p>`;
   if (!cs.allowed) return html`<p class="muted">Messaging is blocked for this lead.</p>`;
+  if (isPlaceholderName(lead.name)) return placeholderNotice(lead);
   const draft = whatsappDraft(lead, state.settings, cs);
   const polite = politeHoursWarning(now);
   const id = `${prefix}wa-${lead.id}`;
@@ -153,6 +160,7 @@ export function emailComposer(lead, state, now, { prefix = '' } = {}) {
   if (!lead.email) return html`<p class="muted">No email address on file.</p>`;
   const cs = contactState(lead, state, now);
   if (!cs.allowed) return html`<p class="muted">Emailing is blocked for this lead.</p>`;
+  if (isPlaceholderName(lead.name)) return placeholderNotice(lead);
   const d = emailDraft(lead, state.settings);
   const id = `${prefix}em-${lead.id}`;
   return html`<div class="stack">
@@ -160,6 +168,10 @@ export function emailComposer(lead, state, now, { prefix = '' } = {}) {
     <label class="field"><span>Email to ${lead.email}</span><textarea id="${id}-b" rows="9">${d.body}</textarea></label>
     <div class="row end"><button type="button" class="btn primary" data-action="emailSend" data-lead="${lead.id}" data-id="${id}">Open email app &amp; log as sent</button></div>
   </div>`;
+}
+
+function placeholderNotice(lead) {
+  return html`<div class="notice warn">"${lead.name}" is a placeholder. <a href="#/lead/${lead.id}/edit">Add the business name you confirmed</a> before writing to them.</div>`;
 }
 
 export const composerActions = {

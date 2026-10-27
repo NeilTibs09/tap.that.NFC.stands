@@ -174,6 +174,11 @@ export function whatsappNumber(lead) {
   return usablePhones(lead).find((p) => p.type === 'mobile')?.e164 || '';
 }
 
+/** Names like "Barber prospect GQ-014" from the Place-ID prospect list, still to be replaced. */
+export function isPlaceholderName(name) {
+  return /\bprospect [A-Z]{2}-\d{3}\b/.test(String(name || ''));
+}
+
 export function firstName(lead) {
   const n = String(lead.contactName || '').trim();
   return n ? n.split(/\s+/)[0] : '';
