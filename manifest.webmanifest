@@ -1,0 +1,15 @@
+{
+  "name": "Tap That Sales Command Centre",
+  "short_name": "Tap That",
+  "description": "Leads, outreach, visits, orders and stock for the Tap That review stand campaign.",
+  "start_url": "./#/today",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f5",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

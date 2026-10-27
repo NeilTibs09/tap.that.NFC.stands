@@ -1,0 +1,13 @@
+{
+  "name": "tap-that-sales-command-centre",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mobile-first sales command centre for the Tap That Google Review stand campaign.",
+  "type": "module",
+  "scripts": {
+    "start": "node tests/serve.mjs",
+    "test": "node --test tests/*.test.js",
+    "e2e": "node tests/e2e/smoke.mjs"
+  },
+  "license": "UNLICENSED"
+}

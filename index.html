@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en-ZA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f766e" />
+    <meta name="description" content="Tap That sales command centre: leads, outreach, visits, orders and stock for the Google Review stand campaign." />
+    <title>Tap That Sales</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Tap That" />
+    <link rel="stylesheet" href="css/app.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#/today" aria-label="Tap That – Today">
+        <img src="assets/icon.svg" alt="" width="28" height="28" />
+        <span>Tap That <small>Sales</small></span>
+      </a>
+      <span id="status-pill" class="pill" aria-live="polite"></span>
+    </header>
+    <div id="storage-warning" class="banner danger" hidden></div>
+
+    <nav class="nav" aria-label="Main">
+      <a href="#/today" data-tab="today"><span aria-hidden="true">◎</span>Today</a>
+      <a href="#/leads" data-tab="leads"><span aria-hidden="true">☰</span>Leads</a>
+      <a href="#/outreach" data-tab="outreach"><span aria-hidden="true">☏</span>Outreach</a>
+      <a href="#/visits" data-tab="visits"><span aria-hidden="true">⌖</span>Visits</a>
+      <a href="#/orders" data-tab="orders"><span aria-hidden="true">▣</span>Orders</a>
+      <a href="#/more" data-tab="more"><span aria-hidden="true">⋯</span>More</a>
+    </nav>
+
+    <main id="view" tabindex="-1"></main>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+    <dialog id="dialog"></dialog>
+
+    <noscript><p class="banner danger">This app needs JavaScript.</p></noscript>
+    <script src="js/vendor/qrcode.js"></script>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
