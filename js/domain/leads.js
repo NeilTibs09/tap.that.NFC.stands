@@ -24,6 +24,7 @@ export function newLead(input = {}, now = new Date()) {
     email: '',
     website: '',
     mapsUrl: '',
+    placeId: '', // Google Place ID: the only Places data allowed to be stored long-term
     reviewUrl: '',
     reviewUrlSource: '',
     googleRating: null,

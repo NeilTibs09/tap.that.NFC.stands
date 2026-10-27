@@ -1,6 +1,6 @@
 // Offline support: network first (so updates arrive), falling back to the
 // cached copy when there's no signal. Bump VERSION when files are added.
-const VERSION = 'tt-v1';
+const VERSION = 'tt-v2';
 const SHELL = [
   './',
   './index.html',
@@ -8,7 +8,6 @@ const SHELL = [
   './css/app.css',
   './assets/icon.svg',
   './assets/icon-192.png',
-  './js/vendor/qrcode.js',
   './js/main.js',
   './js/store.js',
   './js/ui.js',
@@ -27,7 +26,6 @@ const SHELL = [
   './js/views/backup.js',
   './js/views/components.js',
   './js/views/dashboard.js',
-  './js/views/expenses.js',
   './js/views/import.js',
   './js/views/lead-detail.js',
   './js/views/lead-form.js',

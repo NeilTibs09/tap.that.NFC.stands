@@ -1,7 +1,7 @@
 // Campaign numbers for the dashboard. Only FULLY PAID orders count towards the
 // sales target; part-paid stands are reported separately.
 
-import { EXPENSE_CATEGORIES, PIPELINE } from './constants.js';
+import { PIPELINE } from './constants.js';
 import {
   activeOrders,
   expiredReservations,
@@ -16,25 +16,6 @@ import {
 import { leadStage } from './leads.js';
 import { dayKey, daysBetween, roundMoney, sum } from './util.js';
 
-const TRAVEL = new Set(EXPENSE_CATEGORIES.filter((c) => c.travel).map((c) => c.id));
-
-export function expenseTotals(state) {
-  const travel = state.expenses.filter((e) => TRAVEL.has(e.category));
-  const other = state.expenses.filter((e) => !TRAVEL.has(e.category));
-  const actual = (list) => roundMoney(sum(list, (e) => e.actual));
-  // Projected = actual where known, otherwise the estimate.
-  const projected = (list) =>
-    roundMoney(sum(list, (e) => (e.actual !== null && e.actual !== undefined && e.actual !== '' ? e.actual : e.estimated)));
-  return {
-    travelActual: actual(travel),
-    travelEstimated: roundMoney(sum(travel, (e) => e.estimated)),
-    travelProjected: projected(travel),
-    otherActual: actual(other),
-    otherProjected: projected(other),
-    pendingActuals: state.expenses.filter((e) => e.actual === null || e.actual === undefined || e.actual === '').length,
-  };
-}
-
 export function campaignMetrics(state, now = new Date()) {
   const s = state.settings;
   const orders = activeOrders(state);
@@ -47,7 +28,6 @@ export function campaignMetrics(state, now = new Date()) {
   const collected = roundMoney(sum(orders, orderPaid));
   const outstanding = roundMoney(sum(orders, orderBalance));
   const committed = roundMoney(sum(orders, orderTotal));
-  const exp = expenseTotals(state);
   const today = dayKey(now);
   const daysLeft = Math.max(0, daysBetween(today, s.endDate) + 1);
   const remaining = Math.max(0, inventory - fullyPaidUnits);
@@ -67,10 +47,6 @@ export function campaignMetrics(state, now = new Date()) {
     committed,
     inventoryCost: s.inventoryCost,
     grossProfit: roundMoney(collected - s.inventoryCost),
-    netProfit: roundMoney(collected - s.inventoryCost - exp.travelActual - exp.otherActual),
-    travelBudget: s.travelBudget,
-    ...exp,
-    travelRemaining: roundMoney(s.travelBudget - exp.travelActual),
     daysLeft,
     neededPerDay: daysLeft ? Math.ceil(remaining / daysLeft) : remaining,
     beforeStart: today < s.startDate,
@@ -132,8 +108,8 @@ export function actionItems(state, now = new Date()) {
       const st = persoStatus(o.personalisation);
       items.push({
         level: 'info',
-        text: `Paid, awaiting ${st === 'tested' ? 'delivery' : 'personalisation'}: ${leadName(o.leadId)}.`,
-        href: st === 'tested' ? `#/order/${o.id}` : `#/personalise/${o.id}`,
+        text: `Paid, awaiting ${st === 'ready' ? 'delivery' : 'stand setup'}: ${leadName(o.leadId)}.`,
+        href: st === 'ready' ? `#/order/${o.id}` : `#/personalise/${o.id}`,
       });
     }
   }

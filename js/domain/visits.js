@@ -3,7 +3,7 @@
 import { AREAS } from './constants.js';
 import { contactState } from './contact.js';
 import { scoreLead, priorityCompare } from './scoring.js';
-import { ValidationError, roundMoney, uid } from './util.js';
+import { ValidationError, uid } from './util.js';
 
 export function addVisit(state, input) {
   const lead = state.leads.find((l) => l.id === input.leadId);
@@ -82,19 +82,8 @@ export function dropInSuggestions(state, date, now = new Date(), limit = 12) {
   return state.leads
     .filter((l) => (areas.size ? areas.has(l.area) : true) && !planned.has(l.id) && !visitedDone.has(l.id))
     .filter((l) => contactState(l, state, now).allowed)
-    .filter((l) => l.address || l.mapsUrl)
+    .filter((l) => l.address || l.mapsUrl || l.placeId)
     .sort((a, b) => priorityCompare(a, b, weights))
     .slice(0, limit)
     .map((lead) => ({ lead, score: scoreLead(lead, weights) }));
-}
-
-/** Rough fuel estimate: the furthest area's round trip plus 15 km per extra area. */
-export function tripEstimate(state, date) {
-  const plan = dayPlan(state, date).filter((x) => x.visit.status !== 'cancelled');
-  const areas = [...new Set(plan.map((x) => x.lead.area || 'Other'))];
-  if (!areas.length) return { km: 0, cost: 0, areas };
-  const kmTable = state.settings.areaKm || {};
-  const kms = areas.map((a) => Number(kmTable[a] ?? kmTable.Other ?? 50));
-  const km = Math.max(...kms) + 15 * (areas.length - 1);
-  return { km, cost: roundMoney(km * (Number(state.settings.costPerKm) || 0)), areas };
 }

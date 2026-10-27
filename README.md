@@ -35,29 +35,28 @@ All data is stored **in the browser on the device you use** (localStorage). Ther
 
 | Area | What it does |
 | --- | --- |
-| **Today** | Fully paid stands vs 15, stock breakdown, cash collected vs R6 750, outstanding, gross/net profit, travel vs R1 000, today's calls/WhatsApps/emails/visits vs targets, things needing attention, pipeline counts. |
-| **Leads** | Add/edit, CSV import with column matching and duplicate checks, search/filter/sort, CSV export. Phones are normalised to +27 and classified mobile / landline / VoIP. |
+| **Today** | Fully paid stands vs 15, stock breakdown, cash collected vs R6 750, outstanding, gross profit, today's calls/WhatsApps/emails/visits vs targets, things needing attention, pipeline counts. |
+| **Leads** | Add/edit, CSV import with column matching and duplicate checks (including by Google Place ID), search/filter/sort, CSV export. Phones are normalised to +27 and classified mobile / landline / VoIP by prefix. |
 | **Scoring** | Five criteria (25/25/20/20/10, editable), each rated Unknown / No / Some / Strong with written evidence. Unknown is shown as "% known", never assumed. Nothing is auto-scored from review counts. |
 | **Outreach** | Call list ordered by: callbacks due → in the category's calling window → category priority → score. Personalised WhatsApp and email drafts that open in your own app, one at a time. Quick outcome logging, gatekeeper and callback capture, call script. |
 | **Contact rules** | First contact plus up to 3 follow-ups (counted per day), unless the business responds or asks for a callback. "Declined" or "opt out" removes them from every list immediately and cancels planned visits. |
-| **Visits** | Day plan grouped by area, route reordering, "open route in Google Maps", drop-in ideas nearby, visit outcomes (demo, order, flyer, owner absent), fuel estimate for the day. |
+| **Visits** | Day plan grouped by area, route reordering, "open route in Google Maps" (uses exact listings when leads have a Place ID), drop-in ideas nearby, visit outcomes (demo, order, flyer, owner absent). |
 | **Orders** | Reserve specific stands (TT-01…TT-15), unit price, discount, below-minimum approval with a reason, payments (cash/EFT/SnapScan…), payment status, delivery. Pipeline stages: unpaid → partially paid → fully paid → delivered. |
 | **Stock safety** | A stand can only be in one active order. Every save re-checks this and refuses anything that would double-allocate, including from a second open tab. Unpaid holds expire after 48 h (never past the deadline) and are listed for **Release** or **Extend**. Part-paid orders never auto-release; cancelling them needs a refund note. |
-| **Personalise** | 5-minute timer, review-link checker (g.page / write-review links), Place ID → review link builder, link source (customer or researched), logo source, QR code PNG download, set-up and test checklist. Reminders never to ask for Google passwords or promise reviews. |
-| **Expenses** | Estimated and actual travel against the R1 000 budget, plus other costs. |
-| **Settings** | Your details, dates, prices, stock count, targets, score weights, calling windows, message templates, km per area. |
+| **Stand setup** | Per order: the customer's Google review link (with a format check and a Place ID → review link builder), where the link came from, branding source and notes, and a single "stand is ready" flag. Reminder never to ask for Google passwords or promise reviews. |
+| **Settings** | Your details, dates, prices, stock count, targets, score weights, calling windows, message templates. |
 
 Only **fully paid** orders count towards the 15-stand target.
 
 ## What is and isn't tested
 
 Tested automatically:
-- 36 unit tests (`tests/domain.test.js`): phone parsing, CSV parsing, scoring, stock allocation and double-allocation protection, reservations and expiry, payments, follow-up limits, opt-outs, call queue order, import mapping/duplicates, store atomicity.
-- An end-to-end browser test (`tests/e2e/smoke.mjs`) on a phone-sized screen: settings → CSV import → scoring → call outcome → WhatsApp draft → opt-out → visit → order → payments → personalisation + QR → delivery → over-allocation blocked → expired reservation released → expenses → backup, plus a no-horizontal-scroll check.
+- 39 unit tests (`tests/domain.test.js`): phone parsing, CSV parsing, scoring, stock allocation and double-allocation protection, reservations and expiry, payments, follow-up limits, opt-outs, call queue order, import mapping/duplicates, store atomicity, migration of older saved data, Place ID links and imports.
+- An end-to-end browser test (`tests/e2e/smoke.mjs`) on a phone-sized screen: settings → CSV import → scoring → call outcome → WhatsApp draft → opt-out → visit → order → payments → stand setup → delivery → over-allocation blocked → expired reservation released → backup, plus a no-horizontal-scroll check.
 - Offline loading via the service worker was checked in headless Chromium.
 
 Not tested / limitations:
-- **NFC writing from the app** (Chrome on Android "Web NFC") is included as a beta button but hasn't been tried on the real stands. Use an app like NFC Tools if it fails, and always test a tap.
+- The app doesn't program NFC tags or make QR codes; do that with your usual tools, then tick "stand is ready".
 - WhatsApp (`wa.me`), phone (`tel:`), email (`mailto:`) and Google Maps links open those apps. Nothing is sent automatically, and there are no Google, WhatsApp or payment API integrations.
 - Calling windows per category are starting assumptions; adjust them in Settings.
 - Mobile/landline detection is by number prefix; ported numbers may be wrong.
@@ -71,6 +70,5 @@ js/main.js            routing, rendering, event handling
 js/store.js           localStorage persistence (atomic, integrity-checked saves)
 js/domain/*.js        business rules – pure functions, unit tested
 js/views/*.js         screens
-js/vendor/qrcode.js   QR generator (Kazuhiko Arase, MIT)
 tests/                unit tests, e2e smoke test, local server
 ```

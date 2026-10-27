@@ -15,7 +15,6 @@ import orderForm from './views/order-form.js';
 import orderDetail from './views/order-detail.js';
 import personalise from './views/personalise.js';
 import stock from './views/stock.js';
-import expenses from './views/expenses.js';
 import importView from './views/import.js';
 import settings from './views/settings.js';
 import backup from './views/backup.js';
@@ -34,7 +33,6 @@ const ROUTES = [
   [/^order\/([\w-]+)$/, orderDetail, 'orders'],
   [/^personalise\/([\w-]+)$/, personalise, 'orders'],
   [/^stock$/, stock, 'more'],
-  [/^expenses$/, expenses, 'more'],
   [/^import$/, importView, 'leads'],
   [/^settings$/, settings, 'more'],
   [/^backup$/, backup, 'more'],

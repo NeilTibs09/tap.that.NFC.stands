@@ -29,7 +29,7 @@ export default {
     const orders = state.orders.filter((o) => o.leadId === lead.id);
     const visits = state.visits.filter((v) => v.leadId === lead.id).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
     const acts = state.activities.filter((a) => a.leadId === lead.id).sort((a, b) => String(b.at).localeCompare(String(a.at)));
-    const mapLink = lead.mapsUrl ? href(lead.mapsUrl) : mapsSearchLink(lead);
+    const mapLink = lead.placeId ? mapsSearchLink(lead) : lead.mapsUrl ? href(lead.mapsUrl) : mapsSearchLink(lead);
 
     return html`
       <div class="page-head">
@@ -46,7 +46,7 @@ export default {
       <section class="card stack" style="margin-top:12px" data-call-host>
         <div class="actions">
           ${cs.allowed ? callButtons(lead) : ''}
-          <a class="btn" href="${mapLink}" target="_blank" rel="noopener">Directions / Maps</a>
+          <a class="btn" href="${mapLink}" target="_blank" rel="noopener">${lead.placeId ? 'Google Maps listing' : 'Directions / Maps'}</a>
           <a class="btn" href="#/order/new?lead=${lead.id}">New order</a>
         </div>
         ${lead.callbackAt ? html`<div class="notice warn">Callback booked: ${formatDateTime(lead.callbackAt)} <button class="btn small ghost" data-action="clearCallback">Clear</button></div>` : ''}

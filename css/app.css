@@ -259,10 +259,6 @@ td.num, th.num { text-align: right; white-space: nowrap; }
 .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: .92rem; }
 .kv dt { color: var(--muted); }
 .kv dd { margin: 0; overflow-wrap: anywhere; }
-.timer { font-variant-numeric: tabular-nums; font-size: 2rem; font-weight: 700; }
-.timer.over { color: var(--danger); }
-.qr-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-.qr-wrap canvas { width: 180px; height: 180px; background: #fff; border-radius: 8px; border: 1px solid var(--border); image-rendering: pixelated; }
 .message-preview { white-space: pre-wrap; }
 details > summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

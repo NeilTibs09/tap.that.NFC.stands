@@ -126,7 +126,7 @@ export default {
       }
     },
     template() {
-      download('tap-that-leads-template.csv', toCSV([TEMPLATE_HEADERS, ['Fade Lab', 'Barber', '082 123 4567', '', 'hello@example.co.za', '', '5 Main Rd, Walmer, Gqeberha', 'Walmer', 'Gqeberha', 'Sipho', '4.6', '87', '', '', '']]), 'text/csv');
+      download('tap-that-leads-template.csv', toCSV([TEMPLATE_HEADERS, ['Fade Lab', 'Barber', '082 123 4567', '', 'hello@example.co.za', '', '5 Main Rd, Walmer, Gqeberha', 'Walmer', 'Gqeberha', 'Sipho', '4.6', '87', '', '', '', '']]), 'text/csv');
     },
     exportLeads(el, { state }) {
       const w = state.settings.scoringWeights;

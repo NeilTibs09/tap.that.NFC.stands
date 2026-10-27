@@ -6,7 +6,7 @@
 // nothing is saved.
 
 import { DEFAULT_SETTINGS } from './domain/constants.js';
-import { assertIntegrity, makeUnits } from './domain/inventory.js';
+import { assertIntegrity, makeUnits, migratePersonalisation } from './domain/inventory.js';
 import { emptyScores } from './domain/scoring.js';
 
 export const STORAGE_KEY = 'tapthat.salescc.v1';
@@ -23,7 +23,6 @@ export function freshState(now = new Date()) {
     visits: [],
     orders: [],
     units: makeUnits(DEFAULT_SETTINGS.inventoryCount),
-    expenses: [],
     meta: { createdAt: now.toISOString(), updatedAt: now.toISOString(), lastBackupAt: '', rev: 0 },
   };
 }
@@ -40,20 +39,26 @@ function mergeDefaults(target, defaults) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object') throw new Error('Not a Tap That backup.');
   const s = raw;
-  for (const key of ['leads', 'activities', 'visits', 'orders', 'expenses']) {
+  for (const key of ['leads', 'activities', 'visits', 'orders']) {
     if (!Array.isArray(s[key])) s[key] = [];
   }
-  s.settings = mergeDefaults(s.settings || {}, DEFAULT_SETTINGS);
+  // Travel/expense tracking and the setup timer were removed; drop their data.
+  delete s.expenses;
+  s.settings = s.settings || {};
+  for (const k of ['travelBudget', 'costPerKm', 'areaKm', 'personalisationMinutes']) delete s.settings[k];
+  s.settings = mergeDefaults(s.settings, DEFAULT_SETTINGS);
   if (!Array.isArray(s.units) || !s.units.length) s.units = makeUnits(s.settings.inventoryCount);
   s.meta = mergeDefaults(s.meta || {}, { createdAt: new Date().toISOString(), updatedAt: '', lastBackupAt: '', rev: 0 });
   for (const l of s.leads) {
     l.phones = Array.isArray(l.phones) ? l.phones : [];
     l.scores = mergeDefaults(l.scores || {}, emptyScores());
     l.stage = l.stage || 'prospect';
+    l.placeId = l.placeId || '';
   }
   for (const o of s.orders) {
     o.payments = Array.isArray(o.payments) ? o.payments : [];
     o.unitIds = Array.isArray(o.unitIds) ? o.unitIds : [];
+    o.personalisation = migratePersonalisation(o.personalisation);
   }
   s.version = SCHEMA_VERSION;
   return s;

@@ -32,6 +32,7 @@ export default {
           <label class="field full"><span>Address</span><input name="address" value="${l.address}" placeholder="Street address (used for directions)" /></label>
           <label class="field"><span>Website</span><input name="website" value="${l.website}" inputmode="url" /></label>
           <label class="field"><span>Google Maps link</span><input name="mapsUrl" value="${l.mapsUrl}" inputmode="url" /></label>
+          <label class="field"><span>Google Place ID</span><input name="placeId" value="${l.placeId || ''}" placeholder="ChIJ…" autocomplete="off" /></label>
           <label class="field"><span>Google rating</span><input name="googleRating" value="${l.googleRating ?? ''}" inputmode="decimal" placeholder="Unknown" /></label>
           <label class="field"><span>Google review count</span><input name="googleReviewCount" value="${l.googleReviewCount ?? ''}" inputmode="numeric" placeholder="Unknown" /></label>
           <label class="field full"><span>Google review link</span><input name="reviewUrl" value="${l.reviewUrl}" inputmode="url" placeholder="https://g.page/r/…/review" /></label>
@@ -126,6 +127,7 @@ export default {
         address: d.address,
         website: d.website,
         mapsUrl: d.mapsUrl,
+        placeId: d.placeId,
         googleRating: num(d.googleRating),
         googleReviewCount: num(d.googleReviewCount),
         reviewUrl: d.reviewUrl,

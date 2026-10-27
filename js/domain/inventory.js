@@ -6,7 +6,6 @@
 // All functions mutate the `state` passed in (the store hands them a draft copy
 // and only saves if nothing throws).
 
-import { PERSO_STEPS } from './constants.js';
 import { ValidationError, endOfDay, roundMoney, sum, uid } from './util.js';
 
 const EPS = 0.005;
@@ -128,15 +127,15 @@ export function reservationExpiry(settings, now) {
   return (deadline > now && expiry > deadline ? deadline : expiry).toISOString();
 }
 
+// Stand setup record: only the review link, branding and whether it's ready.
 export function emptyPersonalisation() {
   return {
     reviewUrl: '',
-    reviewUrlSource: '',
-    logoSource: '',
+    reviewUrlSource: '', // customer | researched
+    logoSource: '', // customer | researched | none
     logoNote: '',
-    steps: Object.fromEntries(PERSO_STEPS.map((s) => [s.key, false])),
-    startedAt: '',
-    completedAt: '',
+    ready: false,
+    readyAt: '',
     notes: '',
   };
 }
@@ -304,22 +303,31 @@ export function setDelivered(state, orderId, delivered, note = '', now = new Dat
 
 export function persoStatus(p) {
   if (!p) return 'not_started';
-  const s = p.steps || {};
-  const config = ['linkVerified', 'logoApplied', 'nfcWritten', 'qrApplied'];
-  const configDone = config.every((k) => s[k]);
-  const tapTested = s.testedAndroid || s.testedIphone;
-  if (configDone && tapTested && s.testedQr) return 'tested';
-  if (configDone) return 'configured';
-  if (p.reviewUrl || p.startedAt || Object.values(s).some(Boolean)) return 'in_progress';
+  if (p.ready) return 'ready';
+  if (p.reviewUrl || p.logoSource || p.logoNote) return 'in_progress';
   return 'not_started';
 }
 
 export const PERSO_STATUS_LABEL = {
-  not_started: 'Not started',
-  in_progress: 'In progress',
-  configured: 'Configured – not tested',
-  tested: 'Configured & tested',
+  not_started: 'Setup not started',
+  in_progress: 'Setup details recorded',
+  ready: 'Stand ready',
 };
+
+/** Convert setup records saved by the earlier version (timer + checklist). */
+export function migratePersonalisation(p) {
+  const base = emptyPersonalisation();
+  if (!p) return base;
+  const out = { ...base };
+  for (const k of Object.keys(base)) if (p[k] !== undefined) out[k] = p[k];
+  if (p.steps && p.ready === undefined) {
+    const s = p.steps;
+    const configured = s.linkVerified && s.logoApplied && s.nfcWritten && s.qrApplied;
+    out.ready = !!(configured && (s.testedAndroid || s.testedIphone) && s.testedQr);
+    out.readyAt = out.ready ? p.completedAt || '' : '';
+  }
+  return out;
+}
 
 /** Per-unit view for the stock board. */
 export function unitBoard(state) {
@@ -362,4 +370,22 @@ export function integrityIssues(state) {
 export function assertIntegrity(state) {
   const issues = integrityIssues(state);
   if (issues.length) throw new ValidationError(`Stock check failed: ${issues[0]}`);
+}
+
+/** Save the stand setup fields. A stand can only be marked ready once it has a review link. */
+export function updateSetup(state, orderId, fields, now = new Date()) {
+  const o = findActive(state, orderId);
+  const p = migratePersonalisation(o.personalisation);
+  for (const k of ['reviewUrl', 'reviewUrlSource', 'logoSource', 'logoNote', 'notes']) {
+    if (fields[k] !== undefined) p[k] = String(fields[k] || '').trim();
+  }
+  if (fields.ready !== undefined) {
+    const ready = !!fields.ready;
+    if (ready && !p.reviewUrl) throw new ValidationError('Add the Google review link before marking the stand ready.');
+    if (ready && !p.ready) p.readyAt = now.toISOString();
+    if (!ready) p.readyAt = '';
+    p.ready = ready;
+  }
+  o.personalisation = p;
+  return o;
 }

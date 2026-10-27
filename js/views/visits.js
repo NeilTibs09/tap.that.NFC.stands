@@ -3,8 +3,8 @@ import { contactState } from '../domain/contact.js';
 import { leadStage } from '../domain/leads.js';
 import { priorityCompare } from '../domain/scoring.js';
 import { mapsSearchLink, routeLink } from '../domain/templates.js';
-import { addDays, dayKey, daysBetween, formatDay, formatRand, uid } from '../domain/util.js';
-import { addVisit, dayPlan, dropInSuggestions, groupByArea, moveVisit, tripEstimate } from '../domain/visits.js';
+import { addDays, dayKey, daysBetween, formatDay } from '../domain/util.js';
+import { addVisit, dayPlan, dropInSuggestions, groupByArea, moveVisit } from '../domain/visits.js';
 import { confirmDialog, empty, html, href, options, progress, qs, scoreBadge, stageChip, tierChip, toast } from '../ui.js';
 import { callButtons, composerActions, handleLogOutcome, outcomeChanges, outcomeForm } from './components.js';
 
@@ -24,9 +24,8 @@ export default {
     const groups = groupByArea(plan);
     const active = plan.filter((x) => x.visit.status === 'planned');
     const done = plan.filter((x) => x.visit.status === 'done');
-    const trip = tripEstimate(state, date);
+    const areasToday = [...new Set(active.map((x) => x.lead.area))];
     const suggestions = dropInSuggestions(state, date, now);
-    const loggedTrip = state.expenses.some((e) => e.visitDate === date && e.category === 'fuel');
     const leadOpts = state.leads
       .filter((l) => contactState(l, state, now).allowed && !plan.some((x) => x.lead.id === l.id && x.visit.status === 'planned'))
       .sort((a, b) => (a.area + (a.suburb || '')).localeCompare(b.area + (b.suburb || '')) || priorityCompare(a, b, s.scoringWeights))
@@ -45,14 +44,10 @@ export default {
       <section class="card stack">
         ${progress(done.length, s.dailyTargets.visits, 'Visits done')}
         <div class="row between">
-          <span>${active.length} planned · ${trip.areas.join(', ') || 'no areas yet'}</span>
+          <span>${active.length} planned · ${areasToday.join(', ') || 'no areas yet'}</span>
           ${route ? html`<a class="btn primary" href="${route}" target="_blank" rel="noopener">Open route in Google Maps</a>` : ''}
         </div>
         ${active.length > 10 ? html`<small class="muted">Google Maps routes take up to 10 stops; the link covers the first 10.</small>` : ''}
-        ${trip.km
-          ? html`<div class="notice">Rough trip estimate: ~${trip.km} km ≈ ${formatRand(trip.cost)} at ${formatRand(s.costPerKm)}/km (edit rates in Settings).
-              ${loggedTrip ? html`<strong>Logged.</strong>` : html`<button class="btn small" data-action="logTrip" data-km="${trip.km}" data-cost="${trip.cost}" data-areas="${trip.areas.join(', ')}">Log as estimated expense</button>`}</div>`
-          : ''}
         <div class="notice">Carry: stock, a working demo stand, printed flyers, a phone with NFC to test, and the payment QR/bank details.</div>
       </section>
 
@@ -117,22 +112,6 @@ export default {
         s.visits.find((x) => x.id === v.id).date = d;
       }, `Moved to ${formatDay(d)}`);
     },
-    logTrip(el, { app, query }) {
-      const date = query.get('date') || dayKey(new Date());
-      app.act((s) => {
-        s.expenses.push({
-          id: uid('e_'),
-          date,
-          visitDate: date,
-          category: 'fuel',
-          description: `Visit trip: ${el.dataset.areas}`,
-          km: Number(el.dataset.km),
-          estimated: Number(el.dataset.cost),
-          actual: null,
-          notes: '',
-        });
-      }, 'Estimated trip cost logged. Add the actual amount in Expenses after filling up.');
-    },
   },
   changes: {
     ...outcomeChanges,
@@ -152,7 +131,7 @@ export default {
 
 function visitCard({ visit, lead }, state, now, idx, count) {
   const cs = contactState(lead, state, now);
-  const mapLink = lead.mapsUrl ? href(lead.mapsUrl) : mapsSearchLink(lead);
+  const mapLink = lead.placeId ? mapsSearchLink(lead) : lead.mapsUrl ? href(lead.mapsUrl) : mapsSearchLink(lead);
   const out = visit.outcome ? findOutcome('visit', visit.outcome) : null;
   return html`<li class="item" data-call-host style="${visit.status === 'cancelled' ? 'opacity:.6' : ''}">
     <div class="row between">

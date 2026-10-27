@@ -2,7 +2,6 @@ import { html } from '../ui.js';
 
 const LINKS = [
   ['#/stock', 'Stock board', 'All stands and where each one is'],
-  ['#/expenses', 'Expenses', 'Travel budget, fuel estimates and actuals'],
   ['#/import', 'Import / export leads', 'CSV import with duplicate checks'],
   ['#/backup', 'Backup & restore', 'Export your data daily'],
   ['#/settings', 'Settings', 'Your details, targets, prices, templates, scoring'],

@@ -2,3 +2,8 @@ node_modules/
 .DS_Store
 *.log
 test-results/
+
+# Prospect lists built from Google Places must never be committed (public repo + Google terms)
+prospects/
+*prospect*.csv
+_site/

@@ -34,7 +34,7 @@ export function orderRow(o, state, now) {
     <div class="row between"><span class="item-title">${lead?.name || 'Unknown'}</span><span class="chip stage-${st}">${ORDER_STAGE_LABEL[st]}</span></div>
     <div class="item-meta">${o.quantity} × ${formatRand(o.unitPrice)}${o.discount ? ` − ${formatRand(o.discount)}` : ''} = ${formatRand(orderTotal(o))} · paid ${formatRand(orderPaid(o))}${o.status === 'active' && orderBalance(o) > 0 ? ` · owes ${formatRand(orderBalance(o))}` : ''}</div>
     <div class="row">
-      ${o.status === 'active' ? html`<span class="chip">${o.unitIds.join(', ')}</span><span class="chip ${ps === 'tested' ? 'ok' : 'warn'}">${PERSO_STATUS_LABEL[ps]}</span>` : html`<span class="chip">${o.cancelReason}</span>`}
+      ${o.status === 'active' ? html`<span class="chip">${o.unitIds.join(', ')}</span><span class="chip ${ps === 'ready' ? 'ok' : 'warn'}">${PERSO_STATUS_LABEL[ps]}</span>` : html`<span class="chip">${o.cancelReason}</span>`}
       ${expired ? html`<span class="chip danger">Reservation expired</span>` : o.status === 'active' && st === 'order_unpaid' ? html`<span class="chip">Held until ${formatDateTime(o.reservedUntil)}</span>` : ''}
     </div>
   </a></li>`;

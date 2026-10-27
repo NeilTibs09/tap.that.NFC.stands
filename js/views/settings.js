@@ -1,4 +1,4 @@
-import { AREAS, CATEGORIES, DEFAULT_SETTINGS, SCORE_CRITERIA } from '../domain/constants.js';
+import { CATEGORIES, DEFAULT_SETTINGS, SCORE_CRITERIA } from '../domain/constants.js';
 import { syncUnitCount } from '../domain/inventory.js';
 import { weightsTotal } from '../domain/scoring.js';
 import { ValidationError, toNumber } from '../domain/util.js';
@@ -40,10 +40,7 @@ export default {
           ${num('minPrice', 'Minimum price per stand (R)', s.minPrice)}
           ${num('defaultPrice', 'Default selling price (R)', s.defaultPrice)}
           ${num('inventoryCost', 'Total stock cost (R)', s.inventoryCost)}
-          ${num('travelBudget', 'Travel budget (R)', s.travelBudget)}
-          ${num('costPerKm', 'Fuel cost per km (R)', s.costPerKm, 'Used for trip estimates.')}
           ${num('reservationHours', 'Hold unpaid orders for (hours)', s.reservationHours)}
-          ${num('personalisationMinutes', 'Personalisation target (minutes)', s.personalisationMinutes)}
           ${num('maxFollowUps', 'Follow-ups after first contact', s.maxFollowUps, 'Brief says 3.')}
         </fieldset>
 
@@ -86,11 +83,6 @@ export default {
           ${CATEGORIES.map((c) => html`<label class="field"><span>${c.label}</span><textarea name="cl.${c.id}" rows="2" style="min-height:60px">${s.categoryLines[c.id]}</textarea></label>`)}
         </fieldset>
 
-        <fieldset class="form-grid">
-          <legend>Round-trip km from base (trip estimates)</legend>
-          ${AREAS.map((a) => num(`km.${a}`, a, s.areaKm[a] ?? ''))}
-        </fieldset>
-
         <div class="row end" style="position:sticky;bottom:calc(var(--nav-h) + 8px)">
           <button type="button" class="btn ghost" data-action="resetTemplates">Restore default templates</button>
           <button class="btn primary">Save settings</button>
@@ -115,10 +107,7 @@ export default {
         s.defaultPrice = n('defaultPrice', { min: 1 });
         if (s.defaultPrice < s.minPrice) throw new ValidationError('Default price is below the minimum price.');
         s.inventoryCost = n('inventoryCost');
-        s.travelBudget = n('travelBudget');
-        s.costPerKm = n('costPerKm');
         s.reservationHours = n('reservationHours', { min: 1 });
-        s.personalisationMinutes = n('personalisationMinutes', { min: 1 });
         s.maxFollowUps = n('maxFollowUps', { int: true });
         for (const k of ['calls', 'whatsapp', 'emails', 'visits']) s.dailyTargets[k] = n(`dailyTargets.${k}`, { int: true });
         const weights = {};
@@ -131,7 +120,6 @@ export default {
           s.categoryLines[c.id] = d[`cl.${c.id}`];
         }
         for (const k of Object.keys(TEMPLATE_LABELS)) s.templates[k] = d[`tpl.${k}`];
-        for (const a of AREAS) s.areaKm[a] = n(`km.${a}`);
         syncUnitCount(st, n('inventoryCount', { int: true }));
       }, 'Settings saved');
     },

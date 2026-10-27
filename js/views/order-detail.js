@@ -53,7 +53,7 @@ export default {
           <dt>Paid</dt><dd>${formatRand(orderPaid(o))} · <strong>${balance > 0 ? `${formatRand(balance)} outstanding` : 'nothing outstanding'}</strong></dd>
           <dt>Created</dt><dd>${formatDateTime(o.createdAt)}</dd>
           ${active && paymentStatus(o) === 'unpaid' ? html`<dt>Held until</dt><dd>${formatDateTime(o.reservedUntil)}</dd>` : ''}
-          <dt>Personalisation</dt><dd>${PERSO_STATUS_LABEL[ps]}</dd>
+          <dt>Stand setup</dt><dd>${PERSO_STATUS_LABEL[ps]}</dd>
           <dt>Delivery</dt><dd>${o.delivery?.status === 'delivered' ? `Delivered ${formatDateTime(o.delivery.at)}${o.delivery.note ? ` · ${o.delivery.note}` : ''}` : 'Not delivered'}</dd>
           ${o.notes ? html`<dt>Notes</dt><dd>${o.notes}</dd>` : ''}
           ${!active ? html`<dt>Cancelled</dt><dd>${formatDateTime(o.cancelledAt)} · ${o.cancelReason}${o.refundNote ? ` · ${o.refundNote}` : ''}</dd>` : ''}
@@ -83,7 +83,7 @@ export default {
         <section class="card stack" style="margin-top:12px">
           <h2>Set up &amp; deliver</h2>
           <div class="actions">
-            <a class="btn primary" href="#/personalise/${o.id}">Personalise (${PERSO_STATUS_LABEL[ps]})</a>
+            <a class="btn primary" href="#/personalise/${o.id}">Stand setup (${PERSO_STATUS_LABEL[ps]})</a>
             ${o.delivery?.status === 'delivered'
               ? html`<button class="btn" data-action="undeliver">Mark not delivered</button>`
               : html`<button class="btn" data-action="deliver">Mark delivered</button>`}
@@ -124,7 +124,7 @@ export default {
       const o = app.state.orders.find((x) => x.id === params[0]);
       const warnings = [];
       if (paymentStatus(o) !== 'paid') warnings.push(`it isn't fully paid (${formatRand(orderBalance(o))} outstanding)`);
-      if (persoStatus(o.personalisation) !== 'tested') warnings.push("personalisation hasn't been tested");
+      if (persoStatus(o.personalisation) !== 'ready') warnings.push("the stand isn't marked ready");
       if (warnings.length && !(await confirmDialog(`Mark delivered even though ${warnings.join(' and ')}?`, { okLabel: 'Mark delivered' }))) return;
       app.act((s) => setDelivered(s, params[0], true), 'Marked delivered');
     },

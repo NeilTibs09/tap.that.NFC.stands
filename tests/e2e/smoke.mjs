@@ -176,27 +176,20 @@ try {
   const orderUrl = page.url();
   await snap('order-paid');
 
-  // 9. Personalise: link, QR, checklist
+  // 9. Stand setup: review link, branding, ready (no timer, no checklist)
   await page.click('a[href^="#/personalise/"]');
   await page.waitForTimeout(100);
+  assert.equal(await page.locator('#timer, input[data-key], canvas').count(), 0, 'timer/checklist/QR removed');
   await page.fill('input[name=reviewUrl]', 'https://g.page/r/CbGfxTest123/review');
-  await page.click('form[data-form=link] button');
-  await page.waitForTimeout(200);
   assert.match(await text('#url-check'), /opens the review form/);
-  const qrDark = await page.evaluate(() => {
-    const c = document.querySelector('#qr');
-    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-    let dark = 0;
-    for (let i = 0; i < d.length; i += 4) if (d[i] < 50) dark++;
-    return dark;
-  });
-  assert.ok(qrDark > 1000, 'QR code drawn');
-  for (const key of ['linkVerified', 'logoApplied', 'nfcWritten', 'qrApplied', 'testedAndroid', 'testedQr']) {
-    await page.locator(`input[data-key=${key}]`).check();
-    await page.waitForTimeout(80);
-  }
-  assert.match(await text('main'), /Configured & tested/);
-  await snap('personalise');
+  await page.selectOption('select[name=reviewUrlSource]', 'customer');
+  await page.selectOption('select[name=logoSource]', 'customer');
+  await page.fill('input[name=logoNote]', 'fadelab-logo.png');
+  await page.check('input[name=ready]');
+  await page.click('form[data-form=save] button.primary');
+  await page.waitForTimeout(200);
+  assert.match(await text('main'), /Stand ready/);
+  await snap('stand-setup');
 
   // 10. Deliver
   await page.goto(orderUrl);
@@ -245,15 +238,14 @@ try {
   assert.match(await text('#status-pill'), /2\/15 paid/);
   await snap('dashboard');
 
-  // 14. Expenses: log a trip estimate from visits, then the actual
+  // 14. Travel/expense tracking is gone
   await go('#/visits?date=2026-10-28');
-  await page.click('button[data-action=logTrip]');
-  await page.waitForTimeout(100);
-  await go('#/expenses');
-  await page.click('button[data-action=setActual]');
-  await page.fill('dialog[open] input[name=v]', '95');
-  await confirm();
-  assert.match(await text('main'), /R95/);
+  assert.equal(await page.locator('[data-action=logTrip]').count(), 0);
+  assert.doesNotMatch(await text('main'), /trip estimate|fuel/i);
+  await go('#/more');
+  assert.doesNotMatch(await text('main'), /Expenses/);
+  await go('#/today');
+  assert.doesNotMatch(await text('main'), /Travel/);
 
   // 15. Backup export
   await go('#/backup');

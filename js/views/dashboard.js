@@ -60,8 +60,6 @@ export default {
         <div class="stat"><b>${formatRand(m.collected)}</b><span>Collected of ${formatRand(m.revenueTarget)} target</span></div>
         <div class="stat"><b>${formatRand(m.outstanding)}</b><span>Outstanding on orders</span></div>
         <div class="stat"><b>${formatRand(m.grossProfit)}</b><span>Gross profit (collected − ${formatRand(m.inventoryCost)} stock)</span></div>
-        <div class="stat"><b>${formatRand(m.travelActual)}</b><span>Travel spent of ${formatRand(m.travelBudget)}</span></div>
-        <div class="stat"><b>${formatRand(m.netProfit)}</b><span>Net after logged expenses</span></div>
       </section>
 
       <section class="card" style="margin-top:12px">

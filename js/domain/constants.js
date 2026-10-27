@@ -155,24 +155,6 @@ export function outcome(channel, id) {
 
 export const PAYMENT_METHODS = ['Cash', 'EFT', 'SnapScan', 'Zapper', 'Card', 'Other'];
 
-export const EXPENSE_CATEGORIES = [
-  { id: 'fuel', label: 'Fuel / mileage', travel: true },
-  { id: 'toll', label: 'Toll', travel: true },
-  { id: 'parking', label: 'Parking', travel: true },
-  { id: 'printing', label: 'Printing / flyers', travel: false },
-  { id: 'other', label: 'Other', travel: false },
-];
-
-export const PERSO_STEPS = [
-  { key: 'linkVerified', label: 'Review link opened and confirmed it is the right business', group: 'config' },
-  { key: 'logoApplied', label: 'Logo / branding applied (or confirmed none needed)', group: 'config' },
-  { key: 'nfcWritten', label: 'NFC tag programmed with the review link', group: 'config' },
-  { key: 'qrApplied', label: 'QR code applied to the stand', group: 'config' },
-  { key: 'testedAndroid', label: 'Tested NFC tap on an Android phone', group: 'test' },
-  { key: 'testedIphone', label: 'Tested NFC tap on an iPhone', group: 'test' },
-  { key: 'testedQr', label: 'Tested QR scan opens the review page', group: 'test' },
-];
-
 const window = (morning, afternoon) => ({ morning, afternoon });
 
 // Suggested calling windows. These are starting assumptions, not data – edit in Settings.
@@ -213,17 +195,6 @@ export const DEFAULT_TEMPLATES = {
     "Hi {firstName},\n\nMy name is {seller} from Tap That. I supply Google Review stands to local businesses in the Eastern Cape.\n\nCustomers tap their phone on the stand (NFC) or scan its QR code, and your Google review page opens straight away, so it's easier for happy customers to leave a review. {categoryLine}\n\nEach stand is {price}, personalised for {business}, and I set it up on the spot in about 5 minutes. I never need your Google password.\n\nCould I visit this week to show you how it works? It takes about 2 minutes.\n\nKind regards,\n{seller}\n{sellerPhone}\n\nIf you'd prefer not to hear from me again, just reply and let me know.",
 };
 
-export const DEFAULT_AREA_KM = {
-  Gqeberha: 40,
-  Kariega: 70,
-  Despatch: 60,
-  'Jeffreys Bay': 160,
-  Humansdorp: 180,
-  'St Francis Bay': 200,
-  'Cape St Francis': 210,
-  Other: 50,
-};
-
 export const DEFAULT_SETTINGS = {
   campaignName: 'Tap That – Eastern Cape launch',
   startDate: '2026-10-26',
@@ -233,10 +204,7 @@ export const DEFAULT_SETTINGS = {
   minPrice: 450,
   defaultPrice: 450,
   inventoryCost: 1400,
-  travelBudget: 1000,
-  costPerKm: 2.5,
   reservationHours: 48,
-  personalisationMinutes: 5,
   maxFollowUps: 3,
   dailyTargets: { calls: 50, whatsapp: 50, emails: 10, visits: 20 },
   scoringWeights: { access: 25, multi: 25, active: 20, reviewGap: 20, lowOnline: 10 },
@@ -244,5 +212,4 @@ export const DEFAULT_SETTINGS = {
   callWindows: DEFAULT_CALL_WINDOWS,
   categoryLines: DEFAULT_CATEGORY_LINES,
   templates: DEFAULT_TEMPLATES,
-  areaKm: DEFAULT_AREA_KM,
 };

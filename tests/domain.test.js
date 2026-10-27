@@ -14,7 +14,9 @@ import {
   integrityIssues,
   orderStage,
   paymentStatus,
+  migratePersonalisation,
   persoStatus,
+  updateSetup,
   releaseAllExpired,
   releaseReservation,
   removePayment,
@@ -26,9 +28,9 @@ import { leadStage, logActivity, newLead, deleteLead } from '../js/domain/leads.
 import { campaignMetrics, todayActivity } from '../js/domain/metrics.js';
 import { classify, formatNational, splitPhones, toE164 } from '../js/domain/phone.js';
 import { scoreLead } from '../js/domain/scoring.js';
-import { checkReviewUrl, fillTemplate, waLink, whatsappDraft, writeReviewUrl, safeHref } from '../js/domain/templates.js';
+import { checkReviewUrl, fillTemplate, mapsSearchLink, routeLink, waLink, whatsappDraft, writeReviewUrl, safeHref } from '../js/domain/templates.js';
 import { endOfDay, formatRand, toNumber } from '../js/domain/util.js';
-import { addVisit, tripEstimate } from '../js/domain/visits.js';
+import { addVisit } from '../js/domain/visits.js';
 import { createStore, freshState, STORAGE_KEY } from '../js/store.js';
 
 const T0 = new Date('2026-10-28T09:30:00+02:00');
@@ -219,15 +221,30 @@ test('inventory count can grow, and cannot shrink below allocated', () => {
   assert.equal(new Set(s.units.map((u) => u.id)).size, 16);
 });
 
-test('personalisation status', () => {
-  const p = { reviewUrl: '', steps: {} };
-  assert.equal(persoStatus(p), 'not_started');
-  p.reviewUrl = 'https://g.page/r/abc/review';
-  assert.equal(persoStatus(p), 'in_progress');
-  Object.assign(p.steps, { linkVerified: true, logoApplied: true, nfcWritten: true, qrApplied: true });
-  assert.equal(persoStatus(p), 'configured');
-  Object.assign(p.steps, { testedIphone: true, testedQr: true });
-  assert.equal(persoStatus(p), 'tested');
+test('stand setup: link, branding, ready', () => {
+  const s = setup();
+  const o = createOrder(s, { leadId: s.leads[0].id, quantity: 1, unitPrice: 450 }, T0);
+  assert.equal(persoStatus(o.personalisation), 'not_started');
+  assert.throws(() => updateSetup(s, o.id, { ready: true }, T0), /review link/);
+  updateSetup(s, o.id, { logoSource: 'customer', logoNote: 'logo.png' }, T0);
+  assert.equal(persoStatus(o.personalisation), 'in_progress');
+  updateSetup(s, o.id, { reviewUrl: 'https://g.page/r/abc/review', reviewUrlSource: 'customer', ready: true }, T0);
+  assert.equal(persoStatus(o.personalisation), 'ready');
+  assert.equal(o.personalisation.readyAt, T0.toISOString());
+  updateSetup(s, o.id, { ready: false }, T0);
+  assert.equal(o.personalisation.readyAt, '');
+  assert.deepEqual(Object.keys(o.personalisation).sort(), ['logoNote', 'logoSource', 'notes', 'readyAt', 'ready', 'reviewUrl', 'reviewUrlSource'].sort());
+});
+
+test('old checklist-style setup records migrate to ready / not ready', () => {
+  const done = { linkVerified: true, logoApplied: true, nfcWritten: true, qrApplied: true, testedAndroid: true, testedIphone: false, testedQr: true };
+  const a = migratePersonalisation({ reviewUrl: 'https://g.page/r/x', steps: done, startedAt: 'x', completedAt: '2026-10-28T10:00:00Z' });
+  assert.equal(a.ready, true);
+  assert.equal(a.readyAt, '2026-10-28T10:00:00Z');
+  assert.equal(a.steps, undefined);
+  assert.equal(a.startedAt, undefined);
+  const b = migratePersonalisation({ reviewUrl: 'https://g.page/r/x', steps: { ...done, testedQr: false } });
+  assert.equal(b.ready, false);
 });
 
 // ---------------- contact rules ----------------
@@ -398,14 +415,45 @@ test('autoMap recognises common export headers', () => {
 });
 
 // ---------------- visits ----------------
-test('trip estimate uses furthest area', () => {
-  const s = setup(0);
-  s.leads.push(newLead({ name: 'A', area: 'Jeffreys Bay', address: 'x' }), newLead({ name: 'B', area: 'St Francis Bay', address: 'y' }));
-  addVisit(s, { leadId: s.leads[0].id, date: '2026-10-29' });
-  addVisit(s, { leadId: s.leads[1].id, date: '2026-10-29' });
-  const t = tripEstimate(s, '2026-10-29');
-  assert.equal(t.km, 215);
-  assert.equal(t.cost, 537.5);
+test('Place IDs give exact Maps links and routes', () => {
+  const a = newLead({ name: 'Barber prospect 1', area: 'Gqeberha', placeId: 'ChIJaaa' });
+  const b = newLead({ name: 'Barber prospect 2', area: 'Gqeberha', placeId: 'ChIJbbb' });
+  assert.match(mapsSearchLink(a), /query_place_id=ChIJaaa$/);
+  const r = routeLink([a, b]);
+  assert.match(r, /destination_place_id=ChIJbbb/);
+  assert.match(r, /waypoint_place_ids=ChIJaaa/);
+  const c = newLead({ name: 'No ID', address: '1 Main Rd', area: 'Gqeberha' });
+  assert.doesNotMatch(routeLink([a, c]), /place_id/, 'mixed lists fall back to text');
+});
+
+test('Place-ID-only CSV rows import and de-duplicate by Place ID', () => {
+  const csv = [
+    'Business name,Category,Town,Suburb,Google Maps link,Google Place ID,Review link',
+    'Barber prospect GQ-001,Barber,Gqeberha,Walmer (approx.),https://www.google.com/maps/search/?api=1&query=barber&query_place_id=ChIJaaa,ChIJaaa,https://search.google.com/local/writereview?placeid=ChIJaaa',
+    'Barber prospect GQ-002,Barber,Gqeberha,Walmer (approx.),,ChIJaaa,',
+  ].join('\n');
+  const existing = [newLead({ name: 'Someone else', placeId: 'ChIJzzz' })];
+  const plan = planImport(csv, existing);
+  assert.equal(plan.items[0].problems.length, 0);
+  assert.equal(plan.items[0].lead.placeId, 'ChIJaaa');
+  assert.equal(plan.items[0].lead.category, 'barber');
+  assert.equal(plan.items[0].lead.reviewUrlSource, 'researched');
+  assert.ok(plan.items[1].duplicateOf, 'same Place ID twice is a duplicate');
+});
+
+test('store migration drops travel/expense data and old settings', () => {
+  const storage = memoryStorage();
+  const old = freshState();
+  old.expenses = [{ id: 'e1', category: 'fuel', estimated: 100, actual: 90 }];
+  Object.assign(old.settings, { travelBudget: 1000, costPerKm: 2.5, areaKm: { Gqeberha: 40 }, personalisationMinutes: 5 });
+  storage.setItem(STORAGE_KEY, JSON.stringify(old));
+  const store = createStore(storage);
+  store.load();
+  assert.equal(store.state.expenses, undefined);
+  for (const k of ['travelBudget', 'costPerKm', 'areaKm', 'personalisationMinutes']) assert.equal(store.state.settings[k], undefined, k);
+  const m = campaignMetrics(store.state, T0);
+  assert.equal(m.travelBudget, undefined);
+  assert.equal(m.netProfit, undefined);
 });
 
 // ---------------- util ----------------

@@ -62,23 +62,33 @@ export function mailtoLink(email, subject = '', body = '') {
   return `mailto:${encodeURIComponent(email).replace(/%40/g, '@')}${params.length ? '?' + params.join('&') : ''}`;
 }
 
+/** Google Maps link for a lead. With a Place ID it opens that exact listing. */
 export function mapsSearchLink(lead) {
   const q = [lead.name, lead.address || lead.suburb, lead.area].filter(Boolean).join(', ');
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  const base = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  return lead.placeId ? `${base}&query_place_id=${encodeURIComponent(lead.placeId)}` : base;
 }
 
 function placeQuery(lead) {
   return [lead.address || lead.name, lead.address ? '' : lead.suburb, lead.area].filter(Boolean).join(', ');
 }
 
-/** Google Maps directions through up to 9 stops (Maps URL limit for waypoints). */
+/**
+ * Google Maps driving directions through up to 10 stops (Maps URL limit).
+ * When every stop has a Place ID, the exact listings are used.
+ */
 export function routeLink(leads) {
-  const stops = leads.map(placeQuery).filter(Boolean).slice(0, 10);
-  if (!stops.length) return '';
-  const destination = stops[stops.length - 1];
-  const waypoints = stops.slice(0, -1);
-  let url = `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${encodeURIComponent(destination)}`;
-  if (waypoints.length) url += `&waypoints=${encodeURIComponent(waypoints.join('|'))}`;
+  const list = leads.filter((l) => l.placeId || placeQuery(l)).slice(0, 10);
+  if (!list.length) return '';
+  const text = list.map(placeQuery);
+  const usePlaceIds = list.every((l) => l.placeId);
+  const last = list.length - 1;
+  let url = `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${encodeURIComponent(text[last])}`;
+  if (usePlaceIds) url += `&destination_place_id=${encodeURIComponent(list[last].placeId)}`;
+  if (last > 0) {
+    url += `&waypoints=${encodeURIComponent(text.slice(0, last).join('|'))}`;
+    if (usePlaceIds) url += `&waypoint_place_ids=${encodeURIComponent(list.slice(0, last).map((l) => l.placeId).join('|'))}`;
+  }
   return url;
 }
 

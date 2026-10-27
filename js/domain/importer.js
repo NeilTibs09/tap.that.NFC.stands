@@ -20,6 +20,7 @@ export const IMPORT_FIELDS = [
   { key: 'googleRating', label: 'Google rating', synonyms: ['rating', 'stars', 'google rating', 'totalscore', 'total score', 'average rating'] },
   { key: 'googleReviewCount', label: 'Google review count', synonyms: ['reviews', 'review count', 'reviewscount', 'reviews count', 'number of reviews', 'user ratings total', 'google reviews'] },
   { key: 'mapsUrl', label: 'Google Maps link', synonyms: ['maps url', 'google maps', 'maps link', 'place url', 'maps', 'google maps url', 'map link'] },
+  { key: 'placeId', label: 'Google Place ID', synonyms: ['place id', 'placeid', 'google place id', 'place_id'] },
   { key: 'reviewUrl', label: 'Google review link', synonyms: ['review link', 'review url', 'google review link', 'write review url'] },
   { key: 'notes', label: 'Notes', synonyms: ['notes', 'note', 'comments', 'comment', 'description'] },
 ];
@@ -113,6 +114,7 @@ export function rowToLead(row, mapping, defaults = {}, now = new Date()) {
       email: get(row, mapping, 'email'),
       website: get(row, mapping, 'website'),
       mapsUrl: get(row, mapping, 'mapsUrl'),
+      placeId: get(row, mapping, 'placeId'),
       reviewUrl: get(row, mapping, 'reviewUrl'),
       reviewUrlSource: get(row, mapping, 'reviewUrl') ? 'researched' : '',
       contactName: get(row, mapping, 'contactName'),
@@ -131,6 +133,7 @@ export function findDuplicate(lead, existing) {
   const key = normaliseText(lead.name);
   return (
     existing.find((e) => {
+      if (lead.placeId && e.placeId) return lead.placeId === e.placeId;
       if (phones.size && (e.phones || []).some((p) => p.e164 && phones.has(p.e164))) return true;
       if (phones.size && e.whatsapp && phones.has(e.whatsapp)) return true;
       return key && normaliseText(e.name) === key && e.area === lead.area;
@@ -152,7 +155,9 @@ export function planImport(text, existingLeads, mappingOverride, defaults = {}, 
     const lead = rowToLead(row, mapping, defaults, now);
     const problems = [];
     if (!lead.name) problems.push('No business name');
-    if (!lead.phones.length && !lead.email && !lead.whatsapp && !lead.address) problems.push('No phone, email or address');
+    if (!lead.phones.length && !lead.email && !lead.whatsapp && !lead.address && !lead.placeId && !lead.mapsUrl) {
+      problems.push('No phone, email, address or Google Maps link');
+    }
     const dup = lead.name ? findDuplicate(lead, existingLeads) || findDuplicate(lead, accepted) : null;
     if (!problems.length && !dup) accepted.push(lead);
     items.push({ line: i + 2, lead, duplicateOf: dup, problems });
@@ -174,6 +179,7 @@ export const TEMPLATE_HEADERS = [
   'Google rating',
   'Google reviews',
   'Google Maps link',
+  'Google Place ID',
   'Review link',
   'Notes',
 ];
